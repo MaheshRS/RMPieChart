@@ -9,7 +9,7 @@
 #import "RMViewController.h"
 #import "RMPieChart.h"
 
-@interface RMViewController ()
+@interface RMViewController ()<RMPieChartDataSource>
 
 @property(nonatomic, strong)RMPieChart *pieChart;
 
@@ -25,6 +25,9 @@
     self.pieChart = [[RMPieChart alloc]initWithFrame:self.view.bounds];
     self.pieChart.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.pieChart.backgroundColor = [UIColor redColor];
+    self.pieChart.chartBackgroundColor = [UIColor yellowColor];
+    self.pieChart.radiusPercent = 0.3;
+    self.pieChart.datasource = self;
     [self.view addSubview:self.pieChart];
     
     [self.pieChart loadChart];
@@ -35,6 +38,17 @@
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
+}
+
+#pragma mark - Pie Chart Delegate
+- (NSUInteger)numberOfSlicesInChartView:(id)chartView
+{
+    return 1;
+}
+
+- (CGFloat)percentOfTotalValueOfSliceAtIndexpath:(NSIndexPath *)indexPath chart:(id)chartView
+{
+    return 90.0f;
 }
 
 @end
