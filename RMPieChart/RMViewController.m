@@ -12,6 +12,7 @@
 @interface RMViewController ()<RMPieChartDataSource>
 
 @property(nonatomic, strong)RMPieChart *pieChart;
+@property(nonatomic, strong)NSArray *array;
 
 @end
 
@@ -22,16 +23,17 @@
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
     
+    self.array = @[@(90), @(45),@(45),@(110),@(70)];
+    
     self.pieChart = [[RMPieChart alloc]initWithFrame:self.view.bounds];
     self.pieChart.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-    self.pieChart.backgroundColor = [UIColor redColor];
-    self.pieChart.chartBackgroundColor = [UIColor yellowColor];
+    self.pieChart.backgroundColor = [UIColor clearColor];
+    self.pieChart.chartBackgroundColor = [UIColor clearColor];
     self.pieChart.radiusPercent = 0.3;
     self.pieChart.datasource = self;
     [self.view addSubview:self.pieChart];
     
     [self.pieChart loadChart];
-    
 }
 
 - (void)didReceiveMemoryWarning
@@ -43,12 +45,17 @@
 #pragma mark - Pie Chart Delegate
 - (NSUInteger)numberOfSlicesInChartView:(id)chartView
 {
-    return 1;
+    return 5;
 }
 
 - (CGFloat)percentOfTotalValueOfSliceAtIndexpath:(NSIndexPath *)indexPath chart:(id)chartView
 {
-    return 90.0f;
+    return [self.array[indexPath.row] floatValue];
+}
+
+- (UIColor *)colorForSliceAtIndexPath:(NSIndexPath *)indexPath slice:(id)pieSlice
+{
+    return [UIColor colorWithHue:([self.array[indexPath.row] floatValue]/360.0f) saturation:1 brightness:1 alpha:1.0f];
 }
 
 @end

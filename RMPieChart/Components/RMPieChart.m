@@ -133,7 +133,7 @@
     for(NSInteger idx = 0; idx < self.pieChartSliceValues.count; idx++)
     {
         // get the layers and add the animation to these layers
-        [self.pieChartSlices addObject:[self pieLayerWithValueObject:self.pieChartValueObjectList[idx]]];
+        [self.pieChartSlices addObject:[self pieLayerWithValueObject:self.pieChartValueObjectList[idx] atIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]]];
     }
     
     // animate the pie chart
@@ -151,21 +151,24 @@
         RMPieLayer *pieLayer = self.pieChartSlices[idx];
         RMPieValueObject *valueObject = self.pieChartValueObjectList[idx];
         
-        [pieLayer addAnimation:[self addAnimationObjectToPieSlice:pieLayer startSourceAngle:valueObject.sourceStartAngle startDestiantionAngle:valueObject.sourceEndAngle endStartAngle:valueObject.destinationStartAngle endDestinationAngle:valueObject.destinationEndAngle duration:1] forKey:@"path"];
+        [pieLayer addAnimation:[self addAnimationObjectToPieSlice:pieLayer startSourceAngle:-90 startDestiantionAngle:valueObject.sourceEndAngle endStartAngle:-90 endDestinationAngle:valueObject.destinationEndAngle duration:1] forKey:@"path"];
     }
     
     [CATransaction commit];
 }
 
-- (RMPieLayer *)pieLayerWithValueObject:(RMPieValueObject *)valueObject
+- (RMPieLayer *)pieLayerWithValueObject:(RMPieValueObject *)valueObject atIndexPath:(NSIndexPath *)path
 {
     RMPieLayer *pie = [RMPieLayer layer];
     pie.frame =  self.chartContainerView.bounds;
     pie.path = [self pathWithRadiusPercent:_radiusPercent startAngle:degreeToRadian(valueObject.sourceEndAngle) endAngle:degreeToRadian(valueObject.destinationEndAngle)].CGPath;
     pie.strokeColor = [UIColor blackColor].CGColor;
-    pie.lineWidth = 2.0f;
+    pie.lineWidth = 1.0f;
     pie.fillColor = [UIColor colorWithRed:0 green:1 blue:0 alpha:0.7].CGColor;
     [self.chartContainerView.layer addSublayer:pie];
+    
+    if([self.datasource respondsToSelector:@selector(colorForSliceAtIndexPath:slice:)])
+        pie.fillColor = [self.datasource colorForSliceAtIndexPath:path slice:pie].CGColor;
     
     return pie;
 }
@@ -232,7 +235,7 @@
             obj.sourceStartAngle = -90;
             obj.sourceEndAngle = -90;
             obj.destinationStartAngle = -90;
-            obj.destinationEndAngle = [self.pieChartSliceValues[idx] floatValue];
+            obj.destinationEndAngle = [self.pieChartSliceValues[idx] floatValue] - 90;
             [self.pieChartValueObjectList addObject:obj];
         }
     }

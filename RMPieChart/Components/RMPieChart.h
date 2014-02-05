@@ -13,6 +13,7 @@
 @required
 - (NSUInteger)numberOfSlicesInChartView:(id)chartView;
 - (CGFloat)percentOfTotalValueOfSliceAtIndexpath:(NSIndexPath *)indexPath chart:(id)chartView;
+- (UIColor *)colorForSliceAtIndexPath:(NSIndexPath *)indexPath slice:(id)pieSlice;
 
 @end
 
