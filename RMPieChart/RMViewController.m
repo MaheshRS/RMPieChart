@@ -45,7 +45,7 @@
 #pragma mark - Pie Chart Delegate
 - (NSUInteger)numberOfSlicesInChartView:(id)chartView
 {
-    return 5;
+    return self.array.count;
 }
 
 - (CGFloat)percentOfTotalValueOfSliceAtIndexpath:(NSIndexPath *)indexPath chart:(id)chartView

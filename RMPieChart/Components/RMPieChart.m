@@ -308,6 +308,8 @@
         valueObject.destinationStartAngle = valueObject.destinationEndAngle;
         valueObject.destinationEndAngle = valueObject.destinationEndAngle;
     }
+    
+    NSLog(@"Value Object %@",valueObject);
 }
 
 
