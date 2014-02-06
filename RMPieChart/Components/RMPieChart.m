@@ -17,6 +17,7 @@
 @property (nonatomic, strong)NSMutableArray *pieChartSlices;
 @property (nonatomic, strong)NSMutableArray *pieChartSliceValues;
 @property (nonatomic, strong)NSMutableArray *pieChartValueObjectList;
+@property (nonatomic, assign)NSUInteger itemsToBeDeleted;
 
 @end
 
@@ -32,6 +33,7 @@
         self.pieChartSliceValues = [NSMutableArray array];
         self.pieChartValueObjectList = [NSMutableArray array];
         _radiusPercent = 0.5;
+        _itemsToBeDeleted = -1;
     }
     return self;
 }
@@ -93,6 +95,10 @@
     // get the slice count
     NSInteger numberOfSlices = [self pieSliceCount];
     BOOL needUpdate = self.pieChartSliceValues.count > 0;
+    if(numberOfSlices < self.pieChartSlices.count)
+    {
+        self.itemsToBeDeleted = (self.pieChartSlices.count - numberOfSlices);
+    }
     
     // populate the chart values
     [self populateTheChartValues:numberOfSlices];
@@ -134,7 +140,7 @@
     }
 }
 
-
+#pragma mark - Drawing Path methods
 - (void)renderPieChart
 {
     // we have the pie values not just need to draw the layers
@@ -152,6 +158,9 @@
         }
     }
     
+    // update the extrapieSlices
+    [self updateExtraPieSlices];
+    
     // animate the pie chart
     [self animatePie];
 }
@@ -160,8 +169,14 @@
 {
     [CATransaction begin];
     
+    [CATransaction setCompletionBlock:^{
+       // clear if unwanted layers are there
+        [self removeExtraPieSlices];
+    }];
+    
+    
     // we have the pie values not just need to draw the layers
-    for(NSInteger idx = 0; idx < self.pieChartSliceValues.count; idx++)
+    for(NSInteger idx = 0; idx < self.pieChartValueObjectList.count; idx++)
     {
         // get the layers and add the animation to these layers
         RMPieLayer *pieLayer = self.pieChartSlices[idx];
@@ -215,7 +230,36 @@
     return pie;
 }
 
-#pragma mark - Drawing Path methods
+- (void)updateExtraPieSlices
+{
+    if(self.itemsToBeDeleted!=-1)
+    {
+        for (int idx = (self.pieChartValueObjectList.count - 1 - self.itemsToBeDeleted); idx < (self.pieChartValueObjectList.count); idx++) {
+            RMPieLayer *pie = self.pieChartSlices[idx];
+            RMPieValueObject *valueObj = self.pieChartValueObjectList[idx];
+            pie.path = [self pathWithRadiusPercent:_radiusPercent startAngle:degreeToRadian(valueObj.sourceEndAngle) endAngle:degreeToRadian(valueObj.destinationEndAngle)].CGPath;
+        }
+    }
+}
+
+- (void)removeExtraPieSlices
+{
+    if(self.itemsToBeDeleted!=-1)
+    {
+        for (int idx = 0; idx < self.itemsToBeDeleted; idx++) {
+            RMPieLayer *pie = self.pieChartSlices[(self.pieChartSlices.count -1)];
+            [pie removeFromSuperlayer];
+            [self.pieChartSlices removeObject:pie];
+        }
+        
+        for (int idx = 0; idx < self.itemsToBeDeleted; idx++) {
+            [self.pieChartValueObjectList removeObjectAtIndex:(self.pieChartValueObjectList.count-1)];
+        }
+        
+        self.itemsToBeDeleted = -1;
+    }
+}
+
 - (UIBezierPath *)pathWithRadiusPercent:(CGFloat)radiusPercent startAngle:(CGFloat)startAngle endAngle:(CGFloat)endAngle
 {
     // get the position
@@ -285,6 +329,68 @@
 }
 
 - (void)updatePieValueObjects
+{
+    if(self.pieChartSliceValues.count >= self.pieChartValueObjectList.count)
+    {
+        // number of slices have increased or is equal
+        [self updateValuesOnIncreasedSlices];
+    }
+    else
+    {
+        // number of slices have decreased
+        [self updateValuesOnDecreasedSlices];
+    }
+}
+
+- (void)updateValuesOnDecreasedSlices
+{
+    for (NSInteger idx = 0; idx < self.pieChartValueObjectList.count; idx++)
+    {
+        if(idx==(self.pieChartSliceValues.count-1))
+        {
+            RMPieValueObject *prevObj = self.pieChartValueObjectList[idx-1];
+            RMPieValueObject *nextObj = self.pieChartValueObjectList[idx+1];
+            RMPieValueObject *obj = self.pieChartValueObjectList[idx];
+            
+            obj.sourceStartAngle = prevObj.destinationStartAngle;
+            obj.sourceEndAngle = prevObj.destinationEndAngle;
+            obj.destinationStartAngle = nextObj.sourceStartAngle;
+            obj.destinationEndAngle = prevObj.destinationEndAngle + [self.pieChartSliceValues[idx] floatValue];
+        }
+        else if(idx>((self.pieChartSliceValues.count)-1))
+        {
+            RMPieValueObject *obj = self.pieChartValueObjectList[idx];
+            
+            obj.sourceStartAngle = obj.sourceStartAngle;
+            obj.sourceEndAngle = 270.0f;
+            obj.destinationStartAngle = obj.destinationStartAngle;
+            obj.destinationEndAngle = 270.0f;
+        }
+        else
+        {
+            if(idx > 0)
+            {
+                RMPieValueObject *prevObj = self.pieChartValueObjectList[idx-1];
+                
+                RMPieValueObject *obj = self.pieChartValueObjectList[idx];
+                obj.sourceStartAngle = prevObj.destinationStartAngle;
+                obj.sourceEndAngle = prevObj.destinationEndAngle;
+                obj.destinationStartAngle = prevObj.destinationEndAngle;
+                obj.destinationEndAngle = prevObj.destinationEndAngle + [self.pieChartSliceValues[idx] floatValue];
+            }
+            else
+            {
+                RMPieValueObject *obj = self.pieChartValueObjectList[0];
+                obj.sourceStartAngle = obj.sourceStartAngle;
+                obj.sourceEndAngle = obj.sourceEndAngle;
+                obj.destinationStartAngle = obj.destinationStartAngle;
+                obj.destinationEndAngle = [self.pieChartSliceValues[idx] floatValue] - 90;
+            }
+        }
+    }
+}
+
+- (void)updateValuesOnIncreasedSlices
 {
     for (NSInteger idx = 0; idx < self.pieChartSliceValues.count; idx++)
     {

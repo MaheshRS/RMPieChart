@@ -39,17 +39,17 @@
     double delayInSeconds = 2.0;
     dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-        weakself.array = @[@(90), @(45),@(45),@(110),@(20),@(20),@(30)];
+        weakself.array = @[@(25),@(20),@(90),@(45),@(110),@(20),@(20),@(30)];
         [weakself.pieChart reloadChart];
     });
     
     
-    /*double delayInSeconds1 = 5.0;
+    double delayInSeconds1 = 5.0;
     dispatch_time_t popTime1 = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds1 * NSEC_PER_SEC));
     dispatch_after(popTime1, dispatch_get_main_queue(), ^(void){
-        weakself.array = @[@(90), @(45),@(45),@(110),@(70)];
+        weakself.array = @[@(90), @(45),@(45),@(50),@(60),@(70)];
         [weakself.pieChart reloadChart];
-    });*/
+    });
 }
 
 - (void)didReceiveMemoryWarning
