@@ -9,17 +9,22 @@
 #import <UIKit/UIKit.h>
 
 @protocol RMPieChartDataSource <NSObject>
-
 @required
 - (NSUInteger)numberOfSlicesInChartView:(id)chartView;
 - (CGFloat)percentOfTotalValueOfSliceAtIndexpath:(NSIndexPath *)indexPath chart:(id)chartView;
 - (UIColor *)colorForSliceAtIndexPath:(NSIndexPath *)indexPath slice:(id)pieSlice;
-
 @end
+
+@protocol RMPieChartDelegate <NSObject>
+@optional
+- (void)didClearChartView:(id)chartView;
+@end
+
 
 @interface RMPieChart : UIView
 
 @property(nonatomic, weak)id<RMPieChartDataSource>datasource;
+@property(nonatomic, weak)id<RMPieChartDelegate>delegate;
 @property(nonatomic, strong)UIColor *chartBackgroundColor;
 @property(nonatomic, assign)CGFloat radiusPercent;
 
@@ -28,5 +33,8 @@
 
 // reloads the chart and calls the data source
 - (void)reloadChart;
+
+// reset the view (just clear out the chart)
+- (void)resetChart;
 
 @end

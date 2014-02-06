@@ -10,4 +10,6 @@
 
 @interface RMViewController : UIViewController
 
+@property (weak, nonatomic) IBOutlet UIButton *resetBtn;
+
 @end

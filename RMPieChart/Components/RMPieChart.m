@@ -18,6 +18,7 @@
 @property (nonatomic, strong)NSMutableArray *pieChartSliceValues;
 @property (nonatomic, strong)NSMutableArray *pieChartValueObjectList;
 @property (nonatomic, assign)NSInteger itemsToBeDeleted;
+@property (nonatomic, assign)BOOL isResetting;
 
 @end
 
@@ -34,6 +35,7 @@
         self.pieChartValueObjectList = [NSMutableArray array];
         _radiusPercent = 0.5;
         _itemsToBeDeleted = -1;
+        _isResetting = NO;
     }
     return self;
 }
@@ -78,6 +80,12 @@
     _radiusPercent = radiusPercent;
 }
 
+- (void)resetChart
+{
+    // clear the piechart
+    [self clearChart];
+}
+
 #pragma mark - Load ContainerView
 - (void)loadContainerView
 {
@@ -113,6 +121,19 @@
     [self renderPieChart];
 }
 
+- (void)clearChart
+{
+    // clear the chart, remove all the layers
+    [self resetValues];
+    
+    // render the pie
+    [self renderPieChart];
+    
+    // resetting
+    _isResetting = YES;
+    
+}
+
 #pragma mark - DataSource Methods
 - (NSUInteger)pieSliceCount
 {
@@ -138,6 +159,18 @@
     {
         // do nothing
     }
+}
+
+#pragma mark - Delegate Methods
+- (void)clearDataSource
+{
+    // clear the data source
+    [self.pieChartSliceValues removeAllObjects];
+    [self.pieChartValueObjectList removeAllObjects];
+    
+    // call did clear datasource
+    if([self.delegate respondsToSelector:@selector(didClearChartView:)])
+        [self.delegate didClearChartView:self];
 }
 
 #pragma mark - Drawing Path methods
@@ -172,6 +205,10 @@
     [CATransaction setCompletionBlock:^{
        // clear if unwanted layers are there
         [self removeExtraPieSlices];
+        
+        // if resetting clear the pie layers
+        if(_isResetting)
+            [self clearPieLayers];
     }];
     
     
@@ -182,7 +219,7 @@
         RMPieLayer *pieLayer = self.pieChartSlices[idx];
         RMPieValueObject *valueObject = self.pieChartValueObjectList[idx];
         
-        [pieLayer addAnimation:[self addAnimationObjectToPieSlice:pieLayer startSourceAngle:valueObject.sourceStartAngle startDestiantionAngle:valueObject.sourceEndAngle endStartAngle:valueObject.destinationStartAngle endDestinationAngle:valueObject.destinationEndAngle duration:1] forKey:@"path"];
+        [pieLayer addAnimation:[self addAnimationObjectToPieSlice:pieLayer startSourceAngle:valueObject.sourceStartAngle startDestiantionAngle:valueObject.sourceEndAngle endStartAngle:valueObject.destinationStartAngle endDestinationAngle:valueObject.destinationEndAngle duration:0.5] forKey:@"path"];
         
         if(idx == 0)
         {
@@ -272,6 +309,19 @@
     [path  addArcWithCenter:center radius:(CGRectGetWidth(self.chartContainerView.frame) * radiusPercent) startAngle:startAngle endAngle:endAngle clockwise:YES];
     [path closePath];
     return path;
+}
+
+- (void)clearPieLayers
+{
+    NSInteger count = self.pieChartSlices.count;
+    for (NSInteger idx = 0; idx<count; idx++) {
+        RMPieLayer *layer = self.pieChartSlices[self.pieChartSlices.count - 1];
+        [layer removeFromSuperlayer];
+        [self.pieChartSlices removeObject:layer];
+    }
+    
+    _isResetting = NO;
+    [self clearDataSource];
 }
 
 #pragma mark - Key Frame Animation
@@ -447,6 +497,19 @@
     }
     
     NSLog(@"Value Object %@",valueObject);
+}
+
+- (void)resetValues
+{
+    for (NSInteger idx = 0; idx < self.pieChartValueObjectList.count; idx++)
+    {
+        RMPieValueObject *obj = self.pieChartValueObjectList[idx];
+        obj.sourceStartAngle = obj.sourceStartAngle;
+        obj.sourceEndAngle = -90;
+        obj.destinationStartAngle = obj.destinationStartAngle;
+        obj.destinationEndAngle = - 90;
+        
+    }
 }
 
 
