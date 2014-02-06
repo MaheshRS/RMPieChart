@@ -152,6 +152,16 @@
         RMPieValueObject *valueObject = self.pieChartValueObjectList[idx];
         
         [pieLayer addAnimation:[self addAnimationObjectToPieSlice:pieLayer startSourceAngle:-90 startDestiantionAngle:valueObject.sourceEndAngle endStartAngle:-90 endDestinationAngle:valueObject.destinationEndAngle duration:1] forKey:@"path"];
+        
+        if(idx == 0)
+        {
+            [self updatePieValueObject:valueObject prevobj:nil];
+        }
+        else
+        {
+            RMPieValueObject *prevObj = self.pieChartValueObjectList[idx - 1];
+            [self updatePieValueObject:valueObject prevobj:prevObj];
+        }
     }
     
     [CATransaction commit];
@@ -238,6 +248,65 @@
             obj.destinationEndAngle = [self.pieChartSliceValues[idx] floatValue] - 90;
             [self.pieChartValueObjectList addObject:obj];
         }
+    }
+}
+
+- (void)updatePieValueObjects
+{
+    for (NSInteger idx = 0; idx < self.pieChartSliceValues.count; idx++)
+    {
+        if(idx>self.pieChartValueObjectList.count)
+        {
+            RMPieValueObject *prevObj = self.pieChartValueObjectList[idx-1];
+            RMPieValueObject *obj = [[RMPieValueObject alloc]init];
+            
+            obj.sourceStartAngle = prevObj.destinationStartAngle;
+            obj.sourceEndAngle = prevObj.destinationEndAngle;
+            obj.destinationStartAngle = prevObj.destinationEndAngle;
+            obj.destinationEndAngle = prevObj.destinationEndAngle + [self.pieChartSliceValues[idx] floatValue];
+            [self.pieChartValueObjectList addObject:obj];
+        }
+        else
+        {
+            if(idx > 0)
+            {
+                RMPieValueObject *prevObj = self.pieChartValueObjectList[idx-1];
+                
+                RMPieValueObject *obj = [[RMPieValueObject alloc]init];
+                obj.sourceStartAngle = -90;
+                obj.sourceEndAngle = prevObj.destinationEndAngle;
+                obj.destinationStartAngle = prevObj.destinationEndAngle;
+                obj.destinationEndAngle = prevObj.destinationEndAngle + [self.pieChartSliceValues[idx] floatValue];
+                [self.pieChartValueObjectList addObject:obj];
+            }
+            else
+            {
+                RMPieValueObject *obj = [[RMPieValueObject alloc]init];
+                obj.sourceStartAngle = -90;
+                obj.sourceEndAngle = -90;
+                obj.destinationStartAngle = -90;
+                obj.destinationEndAngle = [self.pieChartSliceValues[idx] floatValue] - 90;
+                [self.pieChartValueObjectList addObject:obj];
+            }
+        }
+    }
+}
+
+- (void)updatePieValueObject:(RMPieValueObject *)valueObject prevobj:(RMPieValueObject *)prevValueObject
+{
+    if(prevValueObject)
+    {
+        valueObject.sourceStartAngle = prevValueObject.destinationEndAngle;
+        valueObject.sourceEndAngle = prevValueObject.destinationEndAngle;
+        valueObject.destinationStartAngle = valueObject.destinationEndAngle;
+        valueObject.destinationEndAngle = valueObject.destinationEndAngle;
+    }
+    else
+    {
+        valueObject.sourceStartAngle = valueObject.sourceStartAngle;
+        valueObject.sourceEndAngle = valueObject.sourceEndAngle;
+        valueObject.destinationStartAngle = valueObject.destinationEndAngle;
+        valueObject.destinationEndAngle = valueObject.destinationEndAngle;
     }
 }
 

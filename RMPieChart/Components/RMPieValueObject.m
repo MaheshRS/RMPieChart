@@ -10,4 +10,9 @@
 
 @implementation RMPieValueObject
 
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"(%@) (%@) (%@) (%@)",@(self.sourceStartAngle),@(self.sourceEndAngle),@(self.destinationStartAngle),@(self.destinationEndAngle)];
+}
+
 @end
