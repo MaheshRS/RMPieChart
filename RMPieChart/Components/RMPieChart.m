@@ -92,12 +92,16 @@
 {
     // get the slice count
     NSInteger numberOfSlices = [self pieSliceCount];
+    BOOL needUpdate = self.pieChartSliceValues.count > 0;
     
     // populate the chart values
     [self populateTheChartValues:numberOfSlices];
     
     // calculate the pievalueObjects first
-    [self calculateThePieValueObjects];
+    if(!needUpdate)
+        [self calculateThePieValueObjects];
+    else
+        [self updatePieValueObjects];
     
     // now draw the pie chart
     [self renderPieChart];
@@ -116,6 +120,10 @@
 {
     if([self.datasource respondsToSelector:@selector(percentOfTotalValueOfSliceAtIndexpath:chart:)])
     {
+        // clean the previous objects
+        [self.pieChartSliceValues removeAllObjects];
+        
+        // get new values
         for (int idx = 0; idx < numberOfValues; idx ++) {
             [self.pieChartSliceValues addObject:@([self.datasource percentOfTotalValueOfSliceAtIndexpath:[NSIndexPath indexPathForRow:idx inSection:0] chart:self])];
         }
@@ -132,8 +140,16 @@
     // we have the pie values not just need to draw the layers
     for(NSInteger idx = 0; idx < self.pieChartSliceValues.count; idx++)
     {
-        // get the layers and add the animation to these layers
-        [self.pieChartSlices addObject:[self pieLayerWithValueObject:self.pieChartValueObjectList[idx] atIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]]];
+        if((idx > (self.pieChartSlices.count - 1)) || self.pieChartSlices.count == 0)
+        {
+            // get the layers and add the animation to these layers
+            [self.pieChartSlices addObject:[self pieLayerWithValueObject:self.pieChartValueObjectList[idx] atIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]]];
+        }
+        else
+        {
+            // update the pie
+            [self pieLayerWithValueObject:self.pieChartValueObjectList[idx] atIndexPath:[NSIndexPath indexPathForRow:idx inSection:0]];
+        }
     }
     
     // animate the pie chart
@@ -169,17 +185,33 @@
 
 - (RMPieLayer *)pieLayerWithValueObject:(RMPieValueObject *)valueObject atIndexPath:(NSIndexPath *)path
 {
-    RMPieLayer *pie = [RMPieLayer layer];
-    pie.frame =  self.chartContainerView.bounds;
-    pie.path = [self pathWithRadiusPercent:_radiusPercent startAngle:degreeToRadian(valueObject.sourceEndAngle) endAngle:degreeToRadian(valueObject.destinationEndAngle)].CGPath;
-    pie.strokeColor = [UIColor blackColor].CGColor;
-    pie.lineWidth = 1.0f;
-    pie.fillColor = [UIColor colorWithRed:0 green:1 blue:0 alpha:0.7].CGColor;
-    [self.chartContainerView.layer addSublayer:pie];
+    RMPieLayer *pie = nil;
     
-    if([self.datasource respondsToSelector:@selector(colorForSliceAtIndexPath:slice:)])
-        pie.fillColor = [self.datasource colorForSliceAtIndexPath:path slice:pie].CGColor;
-    
+    if(path.row > (self.pieChartSlices.count-1) || self.pieChartSlices.count == 0)
+    {
+        pie = [RMPieLayer layer];
+        pie.frame =  self.chartContainerView.bounds;
+        pie.path = [self pathWithRadiusPercent:_radiusPercent startAngle:degreeToRadian(valueObject.sourceEndAngle) endAngle:degreeToRadian(valueObject.destinationEndAngle)].CGPath;
+        pie.strokeColor = [UIColor blackColor].CGColor;
+        pie.lineWidth = 1.0f;
+        pie.fillColor = [UIColor colorWithRed:0 green:1 blue:0 alpha:0.7].CGColor;
+        [self.chartContainerView.layer addSublayer:pie];
+        
+        if([self.datasource respondsToSelector:@selector(colorForSliceAtIndexPath:slice:)])
+            pie.fillColor = [self.datasource colorForSliceAtIndexPath:path slice:pie].CGColor;
+    }
+    else
+    {
+        pie = self.pieChartSlices[path.row];
+        pie.frame =  self.chartContainerView.bounds;
+        pie.path = [self pathWithRadiusPercent:_radiusPercent startAngle:degreeToRadian(valueObject.sourceEndAngle) endAngle:degreeToRadian(valueObject.destinationEndAngle)].CGPath;
+        pie.strokeColor = [UIColor blackColor].CGColor;
+        pie.lineWidth = 1.0f;
+        pie.fillColor = [UIColor colorWithRed:0 green:1 blue:0 alpha:0.7].CGColor;
+        
+        if([self.datasource respondsToSelector:@selector(colorForSliceAtIndexPath:slice:)])
+            pie.fillColor = [self.datasource colorForSliceAtIndexPath:path slice:pie].CGColor;
+    }
     return pie;
 }
 
@@ -205,6 +237,7 @@
     keyFrameAnimation.duration = duration;
     keyFrameAnimation.values = [self animatingPathsForSlice:slice startSourceAngle:startSourceAngle startDestiantionAngle:startDestinationAngle endStartAngle:endStartAngle endDestinationAngle:endDestinationAngle duration:duration];
     keyFrameAnimation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionLinear];
+    keyFrameAnimation.removedOnCompletion = YES;
     
     return keyFrameAnimation;
 }
@@ -255,14 +288,14 @@
 {
     for (NSInteger idx = 0; idx < self.pieChartSliceValues.count; idx++)
     {
-        if(idx>self.pieChartValueObjectList.count)
+        if(idx>(self.pieChartValueObjectList.count-1))
         {
             RMPieValueObject *prevObj = self.pieChartValueObjectList[idx-1];
             RMPieValueObject *obj = [[RMPieValueObject alloc]init];
             
             obj.sourceStartAngle = prevObj.destinationStartAngle;
             obj.sourceEndAngle = prevObj.destinationEndAngle;
-            obj.destinationStartAngle = prevObj.destinationEndAngle;
+            obj.destinationStartAngle = 270;
             obj.destinationEndAngle = prevObj.destinationEndAngle + [self.pieChartSliceValues[idx] floatValue];
             [self.pieChartValueObjectList addObject:obj];
         }
@@ -272,21 +305,19 @@
             {
                 RMPieValueObject *prevObj = self.pieChartValueObjectList[idx-1];
                 
-                RMPieValueObject *obj = [[RMPieValueObject alloc]init];
-                obj.sourceStartAngle = -90;
+                RMPieValueObject *obj = self.pieChartValueObjectList[idx];
+                obj.sourceStartAngle = prevObj.destinationStartAngle;
                 obj.sourceEndAngle = prevObj.destinationEndAngle;
                 obj.destinationStartAngle = prevObj.destinationEndAngle;
                 obj.destinationEndAngle = prevObj.destinationEndAngle + [self.pieChartSliceValues[idx] floatValue];
-                [self.pieChartValueObjectList addObject:obj];
             }
             else
             {
-                RMPieValueObject *obj = [[RMPieValueObject alloc]init];
-                obj.sourceStartAngle = -90;
-                obj.sourceEndAngle = -90;
-                obj.destinationStartAngle = -90;
+                RMPieValueObject *obj = self.pieChartValueObjectList[0];
+                obj.sourceStartAngle = obj.sourceStartAngle;
+                obj.sourceEndAngle = obj.sourceEndAngle;
+                obj.destinationStartAngle = obj.destinationStartAngle;
                 obj.destinationEndAngle = [self.pieChartSliceValues[idx] floatValue] - 90;
-                [self.pieChartValueObjectList addObject:obj];
             }
         }
     }
