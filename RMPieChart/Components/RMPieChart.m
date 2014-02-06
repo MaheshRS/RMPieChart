@@ -17,7 +17,7 @@
 @property (nonatomic, strong)NSMutableArray *pieChartSlices;
 @property (nonatomic, strong)NSMutableArray *pieChartSliceValues;
 @property (nonatomic, strong)NSMutableArray *pieChartValueObjectList;
-@property (nonatomic, assign)NSUInteger itemsToBeDeleted;
+@property (nonatomic, assign)NSInteger itemsToBeDeleted;
 
 @end
 
@@ -234,7 +234,7 @@
 {
     if(self.itemsToBeDeleted!=-1)
     {
-        for (int idx = (self.pieChartValueObjectList.count - 1 - self.itemsToBeDeleted); idx < (self.pieChartValueObjectList.count); idx++) {
+        for (NSInteger idx = (self.pieChartValueObjectList.count - 1 - self.itemsToBeDeleted); idx < (self.pieChartValueObjectList.count); idx++) {
             RMPieLayer *pie = self.pieChartSlices[idx];
             RMPieValueObject *valueObj = self.pieChartValueObjectList[idx];
             pie.path = [self pathWithRadiusPercent:_radiusPercent startAngle:degreeToRadian(valueObj.sourceEndAngle) endAngle:degreeToRadian(valueObj.destinationEndAngle)].CGPath;
