@@ -151,7 +151,7 @@
         RMPieLayer *pieLayer = self.pieChartSlices[idx];
         RMPieValueObject *valueObject = self.pieChartValueObjectList[idx];
         
-        [pieLayer addAnimation:[self addAnimationObjectToPieSlice:pieLayer startSourceAngle:-90 startDestiantionAngle:valueObject.sourceEndAngle endStartAngle:-90 endDestinationAngle:valueObject.destinationEndAngle duration:1] forKey:@"path"];
+        [pieLayer addAnimation:[self addAnimationObjectToPieSlice:pieLayer startSourceAngle:valueObject.sourceStartAngle startDestiantionAngle:valueObject.sourceEndAngle endStartAngle:valueObject.destinationStartAngle endDestinationAngle:valueObject.destinationEndAngle duration:1] forKey:@"path"];
         
         if(idx == 0)
         {
@@ -235,7 +235,7 @@
             RMPieValueObject *obj = [[RMPieValueObject alloc]init];
             obj.sourceStartAngle = -90;
             obj.sourceEndAngle = prevObj.destinationEndAngle;
-            obj.destinationStartAngle = prevObj.destinationEndAngle;
+            obj.destinationStartAngle = -90;
             obj.destinationEndAngle = prevObj.destinationEndAngle + [self.pieChartSliceValues[idx] floatValue];
             [self.pieChartValueObjectList addObject:obj];
         }
