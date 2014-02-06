@@ -373,9 +373,9 @@
                 RMPieValueObject *prevObj = self.pieChartValueObjectList[idx-1];
                 
                 RMPieValueObject *obj = self.pieChartValueObjectList[idx];
-                obj.sourceStartAngle = prevObj.destinationStartAngle;
+                obj.sourceStartAngle = obj.sourceStartAngle;
                 obj.sourceEndAngle = prevObj.destinationEndAngle;
-                obj.destinationStartAngle = prevObj.destinationEndAngle;
+                obj.destinationStartAngle = obj.destinationStartAngle;
                 obj.destinationEndAngle = prevObj.destinationEndAngle + [self.pieChartSliceValues[idx] floatValue];
             }
             else
@@ -412,9 +412,9 @@
                 RMPieValueObject *prevObj = self.pieChartValueObjectList[idx-1];
                 
                 RMPieValueObject *obj = self.pieChartValueObjectList[idx];
-                obj.sourceStartAngle = prevObj.destinationStartAngle;
+                obj.sourceStartAngle = obj.sourceStartAngle;
                 obj.sourceEndAngle = prevObj.destinationEndAngle;
-                obj.destinationStartAngle = prevObj.destinationEndAngle;
+                obj.destinationStartAngle = obj.destinationStartAngle;
                 obj.destinationEndAngle = prevObj.destinationEndAngle + [self.pieChartSliceValues[idx] floatValue];
             }
             else
