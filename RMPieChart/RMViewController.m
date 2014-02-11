@@ -28,7 +28,7 @@
     self.pieChart = [[RMPieChart alloc]initWithFrame:self.view.bounds];
     self.pieChart.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
     self.pieChart.backgroundColor = [UIColor clearColor];
-    self.pieChart.chartBackgroundColor = [UIColor clearColor];
+    self.pieChart.chartBackgroundColor = [UIColor grayColor];
     self.pieChart.radiusPercent = 0.3;
     self.pieChart.datasource = self;
     self.pieChart.delegate = self;

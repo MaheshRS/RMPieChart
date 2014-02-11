@@ -36,6 +36,7 @@
         _radiusPercent = 0.5;
         _itemsToBeDeleted = -1;
         _isResetting = NO;
+        _needGradient = NO;
     }
     return self;
 }
@@ -237,15 +238,17 @@
 
 - (RMPieLayer *)pieLayerWithValueObject:(RMPieValueObject *)valueObject atIndexPath:(NSIndexPath *)path
 {
+    // get the pie slice
     RMPieLayer *pie = nil;
-    
     if(path.row > (self.pieChartSlices.count-1) || self.pieChartSlices.count == 0)
     {
         pie = [RMPieLayer layer];
         pie.frame =  self.chartContainerView.bounds;
         pie.path = [self pathWithRadiusPercent:_radiusPercent startAngle:degreeToRadian(valueObject.sourceEndAngle) endAngle:degreeToRadian(valueObject.destinationEndAngle)].CGPath;
-        pie.strokeColor = [UIColor blackColor].CGColor;
-        pie.lineWidth = 1.0f;
+        pie.strokeColor = [UIColor whiteColor].CGColor;
+        pie.fillRule = kCAFillRuleEvenOdd;
+        pie.lineWidth = 2.0f;
+        pie.miterLimit = kCGLineJoinMiter;
         pie.fillColor = [UIColor colorWithRed:0 green:1 blue:0 alpha:0.7].CGColor;
         [self.chartContainerView.layer addSublayer:pie];
         
@@ -255,16 +258,98 @@
     else
     {
         pie = self.pieChartSlices[path.row];
-        pie.frame =  self.chartContainerView.bounds;
         pie.path = [self pathWithRadiusPercent:_radiusPercent startAngle:degreeToRadian(valueObject.sourceEndAngle) endAngle:degreeToRadian(valueObject.destinationEndAngle)].CGPath;
-        pie.strokeColor = [UIColor blackColor].CGColor;
-        pie.lineWidth = 1.0f;
         pie.fillColor = [UIColor colorWithRed:0 green:1 blue:0 alpha:0.7].CGColor;
         
         if([self.datasource respondsToSelector:@selector(colorForSliceAtIndexPath:slice:)])
             pie.fillColor = [self.datasource colorForSliceAtIndexPath:path slice:pie].CGColor;
     }
+    
+    // now see if the gradient is required
+    if(self.needGradient)
+    {
+        /*CGPoint center = CGPointMake(CGRectGetWidth(self.chartContainerView.frame)/2, CGRectGetHeight
+                                     (self.chartContainerView.frame)/2);*/
+        
+        if([pie.mask isKindOfClass:[CAGradientLayer class]])
+        {
+            // update the gradient layer and exit
+            /*CAGradientLayer *grdLayer = (CAGradientLayer *)pie.mask;
+            grdLayer.bounds = pie.bounds;
+            grdLayer.startPoint = CGPointMake((center.x + ((CGRectGetWidth(self.chartContainerView.frame) * _radiusPercent) * cos(degreeToRadian(valueObject.sourceEndAngle)))),
+                                              (center.y + ((CGRectGetWidth(self.chartContainerView.frame) * _radiusPercent) * sin(degreeToRadian(valueObject.sourceEndAngle)))));
+            grdLayer.endPoint = CGPointMake((center.x + ((CGRectGetWidth(self.chartContainerView.frame) * _radiusPercent) * cos(degreeToRadian(valueObject.destinationEndAngle)))),
+                                            (center.y + ((CGRectGetWidth(self.chartContainerView.frame) * _radiusPercent) * sin(degreeToRadian(valueObject.destinationEndAngle)))));
+            [grdLayer setColors:@[(id)[UIColor colorWithWhite:1.0f alpha:1.0f].CGColor,(id)[UIColor colorWithWhite:1.0f alpha:0.2f].CGColor]];*/
+        }
+        else
+        {
+            // Add gradient to the pie chart
+            [self addGradientLayerToPieSlice:pie withValueobject:valueObject];
+        }
+        
+    }
+    
     return pie;
+}
+
+- (void)addGradientLayerToPieSlice:(RMPieLayer *)pieSlice withValueobject:(RMPieValueObject *)valueObject
+{
+    // Add gradient to the pie chart
+    /*CAShapeLayer *shapeLayer = [CAShapeLayer layer];
+    shapeLayer.frame  =  pieSlice.bounds;
+    shapeLayer.path = pieSlice.path;
+    shapeLayer.strokeColor = [UIColor blackColor].CGColor;
+    shapeLayer.lineWidth = 4.0f;
+    shapeLayer.fillColor = [UIColor clearColor].CGColor;*/
+    
+    // first chech where the pie chart Lies
+    // is it on the right side
+    if((valueObject.sourceEndAngle < (180 - 90)) && (valueObject.destinationEndAngle <= (180 - 90)))
+    {
+        // I am on the right side of the pie
+        CAGradientLayer *gradientLayer = [CAGradientLayer layer];
+        gradientLayer.frame = pieSlice.bounds;
+        gradientLayer.startPoint =  CGPointMake(0.5, 0.5);
+        gradientLayer.endPoint = CGPointMake(0.5, 0.5);
+        [gradientLayer setColors:@[(id)[UIColor colorWithWhite:1.0f alpha:1].CGColor,(id)[UIColor colorWithWhite:1.0f alpha:0.0f].CGColor]];
+        [pieSlice addSublayer:gradientLayer];
+    }
+    else if((valueObject.sourceEndAngle >= (180 - 90)) && (valueObject.destinationEndAngle > (180 - 90)))
+    {
+        // I am on the left side
+        CAGradientLayer *gradientLayer = [CAGradientLayer layer];
+        gradientLayer.frame = pieSlice.bounds;
+        gradientLayer.startPoint = CGPointMake(0.5,0.5);
+        gradientLayer.endPoint = CGPointMake(0.5, 0.5);
+        [gradientLayer setColors:@[(id)[UIColor colorWithWhite:1.0f alpha:1].CGColor,(id)[UIColor colorWithWhite:1.0f alpha:0.0f].CGColor]];
+        [pieSlice addSublayer:gradientLayer];
+        
+    }
+    else if (((valueObject.sourceEndAngle < (180 - 90)) && (valueObject.destinationEndAngle > (180 - 90))))
+    {
+        // some part of me is on the left side and some part on the right side
+        // I am on the left side
+        /*CAGradientLayer *gradientLayer = [CAGradientLayer layer];
+        gradientLayer.frame = CGRectMake(CGRectGetMinX(pieSlice.frame), CGRectGetMinY(pieSlice.frame), CGRectGetWidth(pieSlice.frame)/2, CGRectGetHeight(pieSlice.frame));
+        gradientLayer.startPoint = CGPointMake(0.5,0);
+        gradientLayer.endPoint = [self gradientEndPointForValue:valueObject];
+        [gradientLayer setColors:@[(id)[UIColor colorWithWhite:1.0f alpha:1].CGColor,(id)[UIColor colorWithWhite:1.0f alpha:0.0f].CGColor]];
+        [pieSlice addSublayer:gradientLayer];*/
+    }
+}
+
+- (CGPoint) gradientEndPointForValue:(RMPieValueObject *)valueObject
+{
+    CGPoint center = CGPointMake(CGRectGetWidth(self.chartContainerView.frame)/2, CGRectGetHeight
+                                 (self.chartContainerView.frame)/2);
+    CGFloat radius = _radiusPercent * (CGRectGetWidth(self.chartContainerView.frame)/2);
+    CGFloat angle = (valueObject.sourceEndAngle + valueObject.destinationEndAngle)/2;
+    
+    CGFloat normalizedX = (center.x + radius*cos(degreeToRadian(angle)))/(CGRectGetWidth(self.chartContainerView.frame)/2);
+    CGFloat normalizedY = (center.y + radius*sin(degreeToRadian(angle)))/(CGRectGetWidth(self.chartContainerView.frame)/2);
+    
+    return CGPointMake(normalizedX, normalizedY);
 }
 
 - (void)updateExtraPieSlices

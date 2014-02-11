@@ -28,6 +28,9 @@
 @property(nonatomic, strong)UIColor *chartBackgroundColor;
 @property(nonatomic, assign)CGFloat radiusPercent;
 
+// by default there is no gradient
+@property(nonatomic, assign)BOOL needGradient;
+
 // loads the chart. without call to this there will be no chart!
 - (void)loadChart;
 
